@@ -382,18 +382,12 @@ _.extend(BaseTheme.prototype, {
       'stroke-dasharray': this.line_types[signal.linetype]
     });
 
-    var y1 = offsetY + SIGNAL_MARGIN;
-    var y2 = y1 + signal.height - SIGNAL_MARGIN;
+    // 3 segment polyline.
+    var line = this._paper.path("M{0},{1} h{2} v{3} h{4}", aX, offsetY + SIGNAL_MARGIN,
+        SELF_SIGNAL_WIDTH,
+        signal.height - SIGNAL_MARGIN,
+        -SELF_SIGNAL_WIDTH);
 
-    // Draw three lines, the last one with a arrow
-    var line;
-    line = this.draw_line(aX, y1, aX + SELF_SIGNAL_WIDTH, y1);
-    line.attr(attr);
-
-    line = this.draw_line(aX + SELF_SIGNAL_WIDTH, y1, aX + SELF_SIGNAL_WIDTH, y2);
-    line.attr(attr);
-
-    line = this.draw_line(aX + SELF_SIGNAL_WIDTH, y2, aX, y2);
     attr['arrow-end'] = this.arrow_types[signal.arrowtype] + '-wide-long';
     line.attr(attr);
   },
