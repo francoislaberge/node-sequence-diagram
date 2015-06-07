@@ -1,5 +1,3 @@
-var _ = require('underscore');
-
 Diagram = function() {
   this.title   = undefined;
   this.actors  = [];
@@ -78,7 +76,7 @@ Diagram.Note = function(actor, placement, message) {
 };
 
 Diagram.Note.prototype.hasManyActors = function() {
-  return _.isArray(this.actor);
+  return Array.isArray(this.actor);
 };
 
 Diagram.unescape = function(s) {
@@ -103,34 +101,14 @@ Diagram.PLACEMENT = {
   OVER    : 2
 };
 
-/**
- * jison doesn't have a good exception, so we make one.
- * This is brittle as it depends on jison internals
- */
-function ParseError(message, hash) {
-  _.extend(this, hash);
-
-  this.name = "ParseError";
-  this.message = (message || "");
-}
-ParseError.prototype = new Error();
-Diagram.ParseError = ParseError;
-
 Diagram.parse = function(input) {
   var Parser = require('./grammar.js').Parser;
 
   // Create the object to track state and deal with errors
   var p = new Parser();
   p.yy = new Diagram();
-  p.parseError = function(message, hash) {
-    throw new ParseError(message, hash);
-  };
 
-  var diagram = p.parse(input);
-
-  // Then clean up the parseError key that a user won't care about
-  delete diagram.parseError;
-  return diagram;
+  return p.parse(input);
 };
 
 Diagram.prototype.drawSVG = function(container) {

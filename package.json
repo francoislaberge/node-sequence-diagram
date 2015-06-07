@@ -6,8 +6,7 @@
   "main": "src/diagram.js",
 
   "dependencies": {
-    "raphael": "^2",
-    "underscore": "^1"
+    "raphael": "^2"
   },
 
   "devDependencies": {
