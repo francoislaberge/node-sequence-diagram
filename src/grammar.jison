@@ -34,29 +34,28 @@ var Diagram = require('./diagram.js');
 
 /lex
 
-%start start
+%start document
 
 %% /* language grammar */
 
-start
-    : document 'EOF' { return yy.parser.yy; } /* returning parser.yy is a quirk of jison >0.4.10 */
-    ;
-
 document
-    : /* empty */
-    | document line
+    : newlines title_section alias_section sequence_section 'EOF' { return yy.parser.yy; }
     ;
 
-line
-    : statement { }
-    | 'NL'
+title_section
+    : 'title' message newlines      { yy.parser.yy.setTitle($2); }
+    | /* empty */
     ;
 
-statement
-    : 'participant' actor_alias { $2; }
-    | signal               { yy.parser.yy.addSignal($1); }
-    | note_statement       { yy.parser.yy.addSignal($1); }
-    | 'title' message      { yy.parser.yy.setTitle($2);  }
+alias_section
+    : alias_section 'participant' actor_alias newlines { $3; }
+    | /* empty */
+    ;
+
+sequence_section
+    : sequence_section signal newlines           { yy.parser.yy.addSignal($2); }
+    | sequence_section note_statement newlines   { yy.parser.yy.addSignal($2); }
+    | /* empty */
     ;
 
 note_statement
@@ -84,7 +83,7 @@ actor
     ;
 
 actor_alias
-    : ACTOR { $$ = yy.parser.yy.getActorWithAlias(Diagram.unescape($1)); }
+    : ACTOR { $$ = yy.parser.yy.addAlias(Diagram.unescape($1)); }
     ;
 
 signaltype
@@ -104,6 +103,11 @@ arrowtype
 
 message
     : MESSAGE { $$ = Diagram.unescape($1.substring(1)); }
+    ;
+
+newlines
+    : 'NL' newlines
+    | /* empty */
     ;
 
 %%

@@ -1,43 +1,43 @@
 var _ = require('underscore');
 
-function Diagram() {
+Diagram = function() {
   this.title   = undefined;
   this.actors  = [];
   this.signals = [];
-}
 
-/*
- * Return an existing actor with this alias, or creates a new one with alias and name.
- */
-Diagram.prototype.getActor = function(alias, name) {
-  alias = alias.trim();
-
-  var i, actors = this.actors;
-  for (i in actors) {
-    if (actors[i].alias == alias)
-      return actors[i];
-  }
-  i = actors.push( new Diagram.Actor(alias, (name || alias), actors.length) );
-  return actors[ i - 1 ];
+  this.aliases_ = {};
 };
 
-/*
- * Parses the input as either a alias, or a "name as alias", and returns the corresponding actor.
- */
-Diagram.prototype.getActorWithAlias = function(input) {
-  input = input.trim();
+Diagram.prototype.getActor = function(name) {
+  console.assert(name == name.trim(), 'Got an untrimmed name.');
 
-  // We are lazy and do some of the parsing in javascript :(. TODO move into the .jison file.
-  var s = /([\s\S]+) as (\S+)$/im.exec(input);
-  var alias, name;
-  if (s) {
-    name  = s[1].trim();
-    alias = s[2].trim();
-  } else {
-    name = alias = input;
+  if (name in this.aliases_) {
+    name = this.aliases_[name];
   }
 
-  return this.getActor(alias, name);
+  var actors = this.actors;
+  for (var i = 0; i < actors.length; ++i) {
+    if (actors[i].name == name) {
+      return actors[i];
+    }
+  }
+
+  actors.push(new Diagram.Actor(name, actors.length));
+  return actors[actors.length - 1];
+};
+
+Diagram.prototype.addAlias = function(input) {
+  console.assert(input == input.trim(), 'Got an untrimmed alias input.');
+
+  var s = /([\s\S]+) as (\S+)$/im.exec(input);
+  if (!s) {
+    throw new Error('No alias specified: ' + input);
+  }
+
+  var name = s[1].trim();
+  var alias = s[2].trim();
+
+  this.aliases_[alias] = name;
 };
 
 Diagram.prototype.setTitle = function(title) {
@@ -45,11 +45,10 @@ Diagram.prototype.setTitle = function(title) {
 };
 
 Diagram.prototype.addSignal = function(signal) {
-  this.signals.push( signal );
+  this.signals.push(signal);
 };
 
-Diagram.Actor = function(alias, name, index) {
-  this.alias = alias;
+Diagram.Actor = function(name, index) {
   this.name  = name;
   this.index = index;
 };
@@ -64,7 +63,7 @@ Diagram.Signal = function(actorA, signaltype, actorB, message) {
 };
 
 Diagram.Signal.prototype.isSelf = function() {
-  return this.actorA.index == this.actorB.index;
+  return this.actorA == this.actorB;
 };
 
 Diagram.Note = function(actor, placement, message) {
