@@ -92,8 +92,9 @@ Diagram.LINETYPE = {
 };
 
 Diagram.ARROWTYPE = {
-  FILLED  : 0,
-  OPEN    : 1
+  NONE    : 0,
+  FILLED  : 1,
+  OPEN    : 2
 };
 
 Diagram.PLACEMENT = {

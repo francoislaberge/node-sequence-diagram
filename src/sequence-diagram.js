@@ -124,6 +124,7 @@ _.extend(BaseTheme.prototype, {
     this._signals_height = 0;
 
     var a = this.arrow_types = {};
+    a[ARROWTYPE.NONE] = 'none';
     a[ARROWTYPE.FILLED] = 'block';
     a[ARROWTYPE.OPEN]   = 'open';
 
