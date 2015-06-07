@@ -44,17 +44,6 @@ var RECT = {
   'fill': "#fff"
 };
 
-function AssertException(message) { this.message = message; }
-AssertException.prototype.toString = function () {
-  return 'AssertException: ' + this.message;
-};
-
-function assert(exp, message) {
-  if (!exp) {
-    throw new AssertException(message);
-  }
-}
-
 /******************
 * Drawing extras
 ******************/
@@ -72,7 +61,7 @@ function getCenterY(box) {
 ******************/
 
 Raphael.fn.line = function(x1, y1, x2, y2) {
-  assert(_.all([x1,x2,y1,y2], _.isFinite), "x1,x2,y1,y2 must be numeric");
+  console.assert(_.all([x1,x2,y1,y2], _.isFinite), "x1,x2,y1,y2 must be numeric");
   return this.path("M{0},{1} L{2},{3}", x1, y1, x2, y2);
 };
 
@@ -220,7 +209,7 @@ _.extend(BaseTheme.prototype, {
     }, this);
 
     function actor_ensure_distance(a, b, d) {
-      assert(a < b, "a must be less than or equal to b");
+      console.assert(a < b, "a must be less than or equal to b");
 
       if (a < 0) {
         // Ensure b has left margin
@@ -378,7 +367,7 @@ _.extend(BaseTheme.prototype, {
   },
 
   draw_self_signal : function(signal, offsetY) {
-    assert(signal.isSelf(), "signal must be a self signal");
+    console.assert(signal.isSelf(), "signal must be a self signal");
 
     var text_bb = signal.text_bb;
     var aX = getCenterX(signal.actorA);
