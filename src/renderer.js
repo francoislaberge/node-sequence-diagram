@@ -99,10 +99,10 @@ Raphael.fn.print_center = function(x, y, string, font, size, letter_spacing) {
 };
 
 /******************
-* BaseTheme
+* Renderer
 ******************/
 
-var BaseTheme = function(diagram) {
+var Renderer = function(diagram) {
   this.diagram = diagram;
   this._paper  = undefined;
   this._font   = undefined;
@@ -122,26 +122,26 @@ var BaseTheme = function(diagram) {
   l[LINETYPE.DOTTED] = '-';
 };
 
-BaseTheme.prototype.init_paper = function(container) {
+Renderer.prototype.init_paper = function(container) {
   this._paper = new Raphael(container, 320, 200);
 };
 
-BaseTheme.prototype.init_font = function() {
+Renderer.prototype.init_font = function() {
   this._font = {
     'font-size': 16,
     'font-family': 'Andale Mono, monospace'
   };
 };
 
-BaseTheme.prototype.draw_line = function(x1, y1, x2, y2) {
+Renderer.prototype.draw_line = function(x1, y1, x2, y2) {
   return this._paper.path('M{0},{1} L{2},{3}', x1, y1, x2, y2);
 };
 
-BaseTheme.prototype.draw_rect = function(x, y, w, h) {
+Renderer.prototype.draw_rect = function(x, y, w, h) {
   return this._paper.rect(x, y, w, h);
 };
 
-BaseTheme.prototype.draw = function(container) {
+Renderer.prototype.draw = function(container) {
   var diagram = this.diagram;
   this.init_paper(container);
   this.init_font();
@@ -162,7 +162,7 @@ BaseTheme.prototype.draw = function(container) {
   this._paper.setFinish();
 };
 
-BaseTheme.prototype.layout = function() {
+Renderer.prototype.layout = function() {
   // Local copies
   var diagram = this.diagram;
   var paper   = this._paper;
@@ -308,13 +308,13 @@ BaseTheme.prototype.layout = function() {
   return this;
 };
 
-BaseTheme.prototype.draw_title = function() {
+Renderer.prototype.draw_title = function() {
   var title = this._title;
   if (title)
     this.draw_text_box(title, title.message, TITLE_MARGIN, TITLE_PADDING, this._font);
 };
 
-BaseTheme.prototype.draw_actors = function(offsetY) {
+Renderer.prototype.draw_actors = function(offsetY) {
   var y = offsetY;
   this.diagram.actors.forEach(function(a) {
     // Top box
@@ -332,13 +332,13 @@ BaseTheme.prototype.draw_actors = function(offsetY) {
   }, this);
 };
 
-BaseTheme.prototype.draw_actor = function (actor, offsetY, height) {
+Renderer.prototype.draw_actor = function (actor, offsetY, height) {
   actor.y      = offsetY;
   actor.height = height;
   this.draw_text_box(actor, actor.name, ACTOR_MARGIN, ACTOR_PADDING, this._font);
 };
 
-BaseTheme.prototype.draw_signals = function (offsetY) {
+Renderer.prototype.draw_signals = function (offsetY) {
   var y = offsetY;
   this.diagram.signals.forEach(function(s) {
     if (s.type == "Signal") {
@@ -356,7 +356,7 @@ BaseTheme.prototype.draw_signals = function (offsetY) {
   }, this);
 };
 
-BaseTheme.prototype.draw_self_signal = function(signal, offsetY) {
+Renderer.prototype.draw_self_signal = function(signal, offsetY) {
   console.assert(signal.isSelf(), "signal must be a self signal");
 
   var text_bb = signal.text_bb;
@@ -380,7 +380,7 @@ BaseTheme.prototype.draw_self_signal = function(signal, offsetY) {
   });
 };
 
-BaseTheme.prototype.draw_signal = function (signal, offsetY) {
+Renderer.prototype.draw_signal = function (signal, offsetY) {
   var aX = getCenterX( signal.actorA );
   var bX = getCenterX( signal.actorB );
 
@@ -401,7 +401,7 @@ BaseTheme.prototype.draw_signal = function (signal, offsetY) {
   });
 };
 
-BaseTheme.prototype.draw_note = function (note, offsetY) {
+Renderer.prototype.draw_note = function (note, offsetY) {
   note.y = offsetY;
   var actorA = note.hasManyActors() ? note.actor[0] : note.actor;
   var aX = getCenterX( actorA );
@@ -434,7 +434,7 @@ BaseTheme.prototype.draw_note = function (note, offsetY) {
  * x,y (int) x,y center point for this text
  * TODO Horz center the text when it's multi-line print
  */
-BaseTheme.prototype.draw_text = function (x, y, text, font) {
+Renderer.prototype.draw_text = function (x, y, text, font) {
   var paper = this._paper;
   var f = font || {};
   var t;
@@ -452,7 +452,7 @@ BaseTheme.prototype.draw_text = function (x, y, text, font) {
   t.toFront();
 };
 
-BaseTheme.prototype.draw_text_box = function (box, text, margin, padding, font) {
+Renderer.prototype.draw_text_box = function (box, text, margin, padding, font) {
   var x = box.x + margin;
   var y = box.y + margin;
   var w = box.width  - 2 * margin;
@@ -469,4 +469,4 @@ BaseTheme.prototype.draw_text_box = function (box, text, margin, padding, font) 
   this.draw_text(x, y, text, font);
 };
 
-module.exports.SimpleTheme = BaseTheme;
+module.exports = Renderer;

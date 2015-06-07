@@ -112,8 +112,8 @@ Diagram.parse = function(input) {
 };
 
 Diagram.prototype.drawSVG = function(container) {
-  var SimpleTheme = require('./sequence-diagram.js').SimpleTheme;
-  new SimpleTheme(this).draw(container);
+  var Renderer = require('./renderer.js');
+  new Renderer(this).draw(container);
 };
 
 module.exports = Diagram;
