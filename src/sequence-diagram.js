@@ -55,12 +55,6 @@ function assert(exp, message) {
   }
 }
 
-if (!String.prototype.trim) {
-  String.prototype.trim=function() {
-    return this.replace(/^\s+|\s+$/g, '');
-  };
-}
-
 /******************
 * Drawing extras
 ******************/
@@ -82,33 +76,6 @@ Raphael.fn.line = function(x1, y1, x2, y2) {
   return this.path("M{0},{1} L{2},{3}", x1, y1, x2, y2);
 };
 
-Raphael.fn.wobble = function(x1, y1, x2, y2) {
-  assert(_.all([x1,x2,y1,y2], _.isFinite), "x1,x2,y1,y2 must be numeric");
-
-  var wobble = Math.sqrt( (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)) / 25;
-
-  // Distance along line
-  var r1 = Math.random();
-  var r2 = Math.random();
-
-  var xfactor = Math.random() > 0.5 ? wobble : -wobble;
-  var yfactor = Math.random() > 0.5 ? wobble : -wobble;
-
-  var p1 = {
-    x: (x2 - x1) * r1 + x1 + xfactor,
-    y: (y2 - y1) * r1 + y1 + yfactor
-  };
-
-  var p2 = {
-    x: (x2 - x1) * r2 + x1 - xfactor,
-    y: (y2 - y1) * r2 + y1 - yfactor
-  };
-
-  return "C" + p1.x + "," + p1.y +
-    " " + p2.x + "," + p2.y +
-    " " + x2 + "," + y2;
-};
-
 /**
  * Returns the text's bounding box
  */
@@ -125,27 +92,6 @@ Raphael.fn.text_bbox = function (text, font) {
   p.remove();
 
   return bb;
-};
-
-/**
- * Draws a wobbly (hand drawn) rect
- */
-Raphael.fn.handRect = function (x, y, w, h) {
-  assert(_.all([x, y, w, h], _.isFinite), "x, y, w, h must be numeric");
-  return this.path("M" + x + "," + y +
-    this.wobble(x, y, x + w, y) +
-    this.wobble(x + w, y, x + w, y + h) +
-    this.wobble(x + w, y + h, x, y + h) +
-    this.wobble(x, y + h, x, y))
-    .attr(RECT);
-};
-
-/**
- * Draws a wobbly (hand drawn) line
- */
-Raphael.fn.handLine = function (x1, y1, x2, y2) {
-  assert(_.all([x1,x2,y1,y2], _.isFinite), "x1,x2,y1,y2 must be numeric");
-  return this.path("M" + x1 + "," + y1 + this.wobble(x1, y1, x2, y2));
 };
 
 /**
@@ -481,10 +427,6 @@ _.extend(BaseTheme.prototype, {
       'arrow-end': this.arrow_types[signal.arrowtype] + '-wide-long',
       'stroke-dasharray': this.line_types[signal.linetype]
     });
-
-    //var ARROW_SIZE = 16;
-    //var dir = this.actorA.x < this.actorB.x ? 1 : -1;
-    //draw_arrowhead(bX, offsetY, ARROW_SIZE, dir);
   },
 
   draw_note : function (note, offsetY) {
@@ -554,18 +496,6 @@ _.extend(BaseTheme.prototype, {
 
     this.draw_text(x, y, text, font);
   }
-
-  /**
-   * Draws a arrow head
-   * direction must be -1 for left, or 1 for right
-   */
-  //function draw_arrowhead(x, y, size, direction) {
-  //  var dx = (size/2) * direction;
-  //  var dy = (size/2);
-  //
-  //  y -= dy; x -= dx;
-  //  var p = this._paper.path("M" + x + "," + y + "v" + size + "l" + dx + ",-" + (size/2) + "Z");
-  //}
 });
 
 /******************
@@ -577,14 +507,12 @@ var SimpleTheme = function(diagram) {
 };
 
 _.extend(SimpleTheme.prototype, BaseTheme.prototype, {
-
   init_font : function() {
     this._font = {
       'font-size': 16,
       'font-family': 'Andale Mono, monospace'
     };
   }
-
 });
 
 module.exports.SimpleTheme = SimpleTheme;
