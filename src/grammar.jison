@@ -3,13 +3,13 @@
  *  (c) 2012-2013 Andrew Brampton (bramp.net)
  *  Simplified BSD license.
  */
+%{
+var Diagram = require('./diagram.js');
+%}
+
 %lex
 
 %options case-insensitive
-
-%{
-	// Pre-lexer code can go here
-%}
 
 %%
 

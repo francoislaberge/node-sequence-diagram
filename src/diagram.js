@@ -1,9 +1,5 @@
-/** js sequence diagrams
- *  http://bramp.github.io/js-sequence-diagrams/
- *  (c) 2012-2013 Andrew Brampton (bramp.net)
- *  Simplified BSD license.
- */
-	/*global grammar _ */
+var _ = require('underscore');
+require('./daniel_700.font.js');
 
 	function Diagram() {
 		this.title   = undefined;
@@ -128,9 +124,6 @@
 		/* jshint +W103 */
 	}
 
-	/** The following is included by jspp */
-	/*> ../build/grammar.js */
-
 	/**
 	 * jison doesn't have a good exception, so we make one.
 	 * This is brittle as it depends on jison internals
@@ -145,19 +138,31 @@
 	Diagram.ParseError = ParseError;
 
 	Diagram.parse = function(input) {
-		// Create the object to track state and deal with errors
-		parser.yy = new Diagram();
-		parser.yy.parseError = function(message, hash) {
-			throw new ParseError(message, hash);
-		};
+                var Parser = require('./grammar.js').Parser;
 
-		// Parse
-		var diagram = parser.parse(input);
+		// Create the object to track state and deal with errors
+                var p = new Parser();
+                p.yy = new Diagram();
+                p.parseError = function(message, hash) {
+                  throw new ParseError(message, hash);
+                };
+
+                var diagram = p.parse(input);
 
 		// Then clean up the parseError key that a user won't care about
 		delete diagram.parseError;
 		return diagram;
 	};
 
+Diagram.prototype.drawSVG = function(container, options) {
+  var HandTheme = require('./sequence-diagram.js').HandTheme;
+  var SimpleTheme = require('./sequence-diagram.js').SimpleTheme;
+  var theme = SimpleTheme;
+  if (options && options.theme == 'hand') {
+    theme = HandTheme;
+  }
 
+  new theme(this).draw(container);
+};
 
+module.exports = Diagram;

@@ -1,9 +1,6 @@
-/** js sequence diagrams
- *  http://bramp.github.io/js-sequence-diagrams/
- *  (c) 2012-2013 Andrew Brampton (bramp.net)
- *  Simplified BSD license.
- */
-	/*global Diagram, Raphael, _ */
+var _ = require('underscore');
+var Diagram = require('./diagram.js');
+var Raphael = require('raphael');
 
 	// Following the CSS convention
 	// Margin is the gap outside the box
@@ -572,14 +569,14 @@
 	});
 
 /******************
- * RaphaelTheme
+ * SimpleTheme
  ******************/
 
-	var RaphaelTheme = function(diagram) {
+	var SimpleTheme = function(diagram) {
 		this.init(diagram);
 	};
 
-	_.extend(RaphaelTheme.prototype, BaseTheme.prototype, {
+	_.extend(SimpleTheme.prototype, BaseTheme.prototype, {
 
 		init_font : function() {
 			this._font = {
@@ -591,15 +588,15 @@
 	});
 
 /******************
- * HandRaphaelTheme
+ * HandTheme
  ******************/
 
-	var HandRaphaelTheme = function(diagram) {
+	var HandTheme = function(diagram) {
 		this.init(diagram);
 	};
 
-	// Take the standard RaphaelTheme and make all the lines wobbly
-	_.extend(HandRaphaelTheme.prototype, BaseTheme.prototype, {
+	// Take the standard SimpleTheme and make all the lines wobbly
+	_.extend(HandTheme.prototype, BaseTheme.prototype, {
 		init_font : function() {
 			this._font = {
 				'font-size': 16,
@@ -618,23 +615,5 @@
 		}
 	});
 
-	var themes = {
-		simple : RaphaelTheme,
-		hand  : HandRaphaelTheme
-	};
-
-	Diagram.prototype.drawSVG = function (container, options) {
-		var default_options = {
-			theme: 'hand'
-		};
-
-		options = _.defaults(options || {}, default_options);
-
-		if (!(options.theme in themes))
-			throw new Error("Unsupported theme: " + options.theme);
-
-		var drawing = new themes[options.theme](this);
-		drawing.draw(container);
-
-	}; // end of drawSVG
-
+module.exports.HandTheme = HandTheme;
+module.exports.SimpleTheme = SimpleTheme;
