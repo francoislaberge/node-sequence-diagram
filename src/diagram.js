@@ -1,5 +1,4 @@
 var _ = require('underscore');
-require('./daniel_700.font.js');
 
 function Diagram() {
   this.title   = undefined;
@@ -154,15 +153,9 @@ Diagram.parse = function(input) {
   return diagram;
 };
 
-Diagram.prototype.drawSVG = function(container, options) {
-  var HandTheme = require('./sequence-diagram.js').HandTheme;
+Diagram.prototype.drawSVG = function(container) {
   var SimpleTheme = require('./sequence-diagram.js').SimpleTheme;
-  var theme = SimpleTheme;
-  if (options && options.theme == 'hand') {
-    theme = HandTheme;
-  }
-
-  new theme(this).draw(container);
+  new SimpleTheme(this).draw(container);
 };
 
 module.exports = Diagram;

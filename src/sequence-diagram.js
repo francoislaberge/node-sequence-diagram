@@ -587,33 +587,4 @@ _.extend(SimpleTheme.prototype, BaseTheme.prototype, {
 
 });
 
-/******************
-* HandTheme
-******************/
-
-var HandTheme = function(diagram) {
-  this.init(diagram);
-};
-
-// Take the standard SimpleTheme and make all the lines wobbly
-_.extend(HandTheme.prototype, BaseTheme.prototype, {
-  init_font : function() {
-    this._font = {
-      'font-size': 16,
-      'font-family': 'daniel'
-    };
-
-    this._font._obj = this._paper.getFont('daniel');
-  },
-
-  draw_line : function(x1, y1, x2, y2) {
-    return this._paper.handLine(x1, y1, x2, y2);
-  },
-
-  draw_rect : function(x, y, w, h) {
-    return this._paper.handRect(x, y, w, h);
-  }
-});
-
-module.exports.HandTheme = HandTheme;
 module.exports.SimpleTheme = SimpleTheme;
