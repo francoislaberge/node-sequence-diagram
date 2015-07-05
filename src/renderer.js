@@ -8,11 +8,6 @@ var Raphael = require('raphael');
 // The x/y should be top left corner
 // width/height is with both margin and padding
 
-// TODO
-// Image width is wrong, when there is a note in the right hand col
-// Title box could look better
-// Note box could look better
-
 var DIAGRAM_MARGIN = 10;
 
 var ACTOR_MARGIN   = 10; // Margin around a actor
@@ -34,15 +29,6 @@ var PLACEMENT = Diagram.PLACEMENT;
 var LINETYPE  = Diagram.LINETYPE;
 var ARROWTYPE = Diagram.ARROWTYPE;
 
-var LINE = {
-  'stroke': '#000',
-  'stroke-width': 2
-};
-
-var RECT = {
-  'fill': "#fff"
-};
-
 /******************
 * Drawing extras
 ******************/
@@ -62,40 +48,12 @@ function getCenterY(box) {
 /**
  * Returns the text's bounding box
  */
-Raphael.fn.text_bbox = function (text, font) {
-  var p;
-  if (font._obj) {
-    p = this.print_center(0, 0, text, font._obj, font['font-size']);
-  } else {
-    p = this.text(0, 0, text);
-    p.attr(font);
-  }
-
+Raphael.fn.text_bbox = function (text) {
+  var p = this.text(0, 0, text);
   var bb = p.getBBox();
   p.remove();
 
   return bb;
-};
-
-/**
- * Prints, but aligns text in a similar way to text(...)
- */
-Raphael.fn.print_center = function(x, y, string, font, size, letter_spacing) {
-  var path = this.print(x, y, string, font, size, 'baseline', letter_spacing);
-  var bb = path.getBBox();
-
-  // Translate the text so it's centered.
-  var dx = (x - bb.x) - bb.width / 2;
-  var dy = (y - bb.y) - bb.height / 2;
-
-  // Due to an issue in Raphael 2.1.0 (that seems to be fixed later)
-  // we remap the path itself, instead of using a transformation matrix
-  var m = new Raphael.matrix();
-  m.translate(dx, dy);
-  return path.attr('path', Raphael.mapPath(path.attr('path'), m));
-
-  // otherwise we would do this:
-  //return path.transform("t" + dx + "," + dy);
 };
 
 /******************
@@ -105,7 +63,6 @@ Raphael.fn.print_center = function(x, y, string, font, size, letter_spacing) {
 var Renderer = function(diagram) {
   this.diagram = diagram;
   this._paper  = undefined;
-  this._font   = undefined;
 
   this._title  = undefined; // hack - This should be somewhere better
 
@@ -122,16 +79,20 @@ var Renderer = function(diagram) {
   l[LINETYPE.DOTTED] = '-';
 };
 
-Renderer.prototype.init_paper = function(container) {
-  this._paper = new Raphael(container, 320, 200);
-};
+Renderer.LINE_CLASS_ = [
+  'signal-solid',
+  'signal-dotted'
+];
 
-Renderer.prototype.init_font = function() {
-  this._font = {
-    'font-size': 16,
-    'font-family': 'Andale Mono, monospace'
-  };
-};
+Renderer.ARROW_CLASS_ = [
+  'arrow-none',
+  'arrow-filled',
+  'arrow-open'
+];
+
+Renderer.TEXT_BACKGROUND_CLASS_ = 'textbg';
+Renderer.RECT_CLASS_ = 'rect';
+Renderer.TIMELINE_CLASS_ = 'timeline';
 
 Renderer.prototype.draw_line = function(x1, y1, x2, y2) {
   return this._paper.path('M{0},{1} L{2},{3}', x1, y1, x2, y2);
@@ -142,18 +103,15 @@ Renderer.prototype.draw_rect = function(x, y, w, h) {
 };
 
 Renderer.prototype.draw = function(container) {
-  var diagram = this.diagram;
-  this.init_paper(container);
-  this.init_font();
+  this._paper = new Raphael(container, 0, 0);
 
   this.layout();
 
-  var title_height = this._title ? this._title.height : 0;
-
   this._paper.setStart();
-  this._paper.setSize(diagram.width, diagram.height);
+  this._paper.setSize(this.diagram.width, this.diagram.height);
 
-  var y = DIAGRAM_MARGIN + title_height;
+  var titleHeight = this._title ? this._title.height : 0;
+  var y = DIAGRAM_MARGIN + titleHeight;
 
   this.draw_title();
   this.draw_actors(y);
@@ -166,7 +124,6 @@ Renderer.prototype.layout = function() {
   // Local copies
   var diagram = this.diagram;
   var paper   = this._paper;
-  var font    = this._font;
   var actors  = diagram.actors;
   var signals = diagram.signals;
 
@@ -176,7 +133,7 @@ Renderer.prototype.layout = function() {
   // Setup some layout stuff
   if (diagram.title) {
     var title = this._title = {};
-    var bb = paper.text_bbox(diagram.title, font);
+    var bb = paper.text_bbox(diagram.title);
     title.text_bb = bb;
     title.message = diagram.title;
 
@@ -190,10 +147,9 @@ Renderer.prototype.layout = function() {
   }
 
   actors.forEach(function(a) {
-    var bb = paper.text_bbox(a.name, font);
+    var bb = paper.text_bbox(a.name);
     a.text_bb = bb;
 
-    //var bb = t.attr("text", a.name).getBBox();
     a.x = 0; a.y = 0;
     a.width  = bb.width  + (ACTOR_PADDING + ACTOR_MARGIN) * 2;
     a.height = bb.height + (ACTOR_PADDING + ACTOR_MARGIN) * 2;
@@ -223,9 +179,8 @@ Renderer.prototype.layout = function() {
   signals.forEach(function(s) {
     var a, b; // Indexes of the left and right actors involved
 
-    var bb = paper.text_bbox(s.message, font);
+    var bb = paper.text_bbox(s.message);
 
-    //var bb = t.attr("text", s.message).getBBox();
     s.text_bb = bb;
     s.width   = bb.width;
     s.height  = bb.height;
@@ -311,7 +266,7 @@ Renderer.prototype.layout = function() {
 Renderer.prototype.draw_title = function() {
   var title = this._title;
   if (title)
-    this.draw_text_box(title, title.message, TITLE_MARGIN, TITLE_PADDING, this._font);
+    this.draw_text_box(title, title.message, TITLE_MARGIN, TITLE_PADDING);
 };
 
 Renderer.prototype.draw_actors = function(offsetY) {
@@ -328,14 +283,14 @@ Renderer.prototype.draw_actors = function(offsetY) {
     var line = this.draw_line(
       aX, y + this._actors_height - ACTOR_MARGIN,
       aX, y + this._actors_height + ACTOR_MARGIN + this._signals_height);
-    line.attr(LINE);
+    line.node.classList.add(Renderer.TIMELINE_CLASS_);
   }, this);
 };
 
 Renderer.prototype.draw_actor = function (actor, offsetY, height) {
   actor.y      = offsetY;
   actor.height = height;
-  this.draw_text_box(actor, actor.name, ACTOR_MARGIN, ACTOR_PADDING, this._font);
+  this.draw_text_box(actor, actor.name, ACTOR_MARGIN, ACTOR_PADDING);
 };
 
 Renderer.prototype.draw_signals = function (offsetY) {
@@ -365,7 +320,7 @@ Renderer.prototype.draw_self_signal = function(signal, offsetY) {
   var x = aX + SELF_SIGNAL_WIDTH + SIGNAL_PADDING - text_bb.x;
   var y = offsetY + signal.height / 2;
 
-  this.draw_text(x, y, signal.message, this._font);
+  this.draw_text(x, y, signal.message);
 
   // 3 segment polyline.
   var line = this._paper.path("M{0},{1} h{2} v{3} h{4}", aX, offsetY + SIGNAL_MARGIN,
@@ -373,10 +328,16 @@ Renderer.prototype.draw_self_signal = function(signal, offsetY) {
       signal.height - SIGNAL_MARGIN,
       -SELF_SIGNAL_WIDTH);
 
-  line.attr(LINE);
+  line.node.classList.add(Renderer.LINE_CLASS_[signal.linetype]);
+  line.node.classList.add(Renderer.ARROW_CLASS_[signal.arrowtype]);
+
+  // TODO: eliminate these additional attributes. The stroke-width attribute is
+  // required to make sure the arrow head terminates at the edge of the timeline
+  // and not in the middle of it (i.e. add padding). The arrow-end attribute is
+  // specific to Raphael and needs to be emulated.
   line.attr({
+    'stroke-width': 2,
     'arrow-end': this.arrow_types[signal.arrowtype] + '-wide-long',
-    'stroke-dasharray': this.line_types[signal.linetype]
   });
 };
 
@@ -389,15 +350,22 @@ Renderer.prototype.draw_signal = function (signal, offsetY) {
   var y = offsetY + SIGNAL_MARGIN + 2*SIGNAL_PADDING;
 
   // Draw the text in the middle of the signal
-  this.draw_text(x, y, signal.message, this._font);
+  this.draw_text(x, y, signal.message);
 
   // Draw the line along the bottom of the signal
   y = offsetY + signal.height - SIGNAL_MARGIN - SIGNAL_PADDING;
   var line = this.draw_line(aX, y, bX, y);
-  line.attr(LINE);
+
+  line.node.classList.add(Renderer.LINE_CLASS_[signal.linetype]);
+  line.node.classList.add(Renderer.ARROW_CLASS_[signal.arrowtype]);
+
+  // TODO: eliminate these additional attributes. The stroke-width attribute is
+  // required to make sure the arrow head terminates at the edge of the timeline
+  // and not in the middle of it (i.e. add padding). The arrow-end attribute is
+  // specific to Raphael and needs to be emulated.
   line.attr({
+    'stroke-width': 2,
     'arrow-end': this.arrow_types[signal.arrowtype] + '-wide-long',
-    'stroke-dasharray': this.line_types[signal.linetype]
   });
 };
 
@@ -426,7 +394,7 @@ Renderer.prototype.draw_note = function (note, offsetY) {
       throw new Error("Unhandled note placement:" + note.placement);
   }
 
-  this.draw_text_box(note, note.message, NOTE_MARGIN, NOTE_PADDING, this._font);
+  this.draw_text_box(note, note.message, NOTE_MARGIN, NOTE_PADDING);
 };
 
 /**
@@ -434,25 +402,19 @@ Renderer.prototype.draw_note = function (note, offsetY) {
  * x,y (int) x,y center point for this text
  * TODO Horz center the text when it's multi-line print
  */
-Renderer.prototype.draw_text = function (x, y, text, font) {
+Renderer.prototype.draw_text = function (x, y, text) {
   var paper = this._paper;
-  var f = font || {};
-  var t;
-  if (f._obj) {
-    t = paper.print_center(x, y, text, f._obj, f['font-size']);
-  } else {
-    t = paper.text(x, y, text);
-    t.attr(f);
-  }
+  var t = paper.text(x, y, text);
+
   // draw a rect behind it
   var bb = t.getBBox();
   var r = paper.rect(bb.x, bb.y, bb.width, bb.height);
-  r.attr({'fill': "#fff", 'stroke': 'none'});
+  r.node.classList.add(Renderer.TEXT_BACKGROUND_CLASS_);
 
   t.toFront();
 };
 
-Renderer.prototype.draw_text_box = function (box, text, margin, padding, font) {
+Renderer.prototype.draw_text_box = function (box, text, margin, padding) {
   var x = box.x + margin;
   var y = box.y + margin;
   var w = box.width  - 2 * margin;
@@ -460,13 +422,13 @@ Renderer.prototype.draw_text_box = function (box, text, margin, padding, font) {
 
   // Draw inner box
   var rect = this.draw_rect(x, y, w, h);
-  rect.attr(LINE);
+  rect.node.classList.add(Renderer.RECT_CLASS_);
 
   // Draw text (in the center)
   x = getCenterX(box);
   y = getCenterY(box);
 
-  this.draw_text(x, y, text, font);
+  this.draw_text(x, y, text);
 };
 
 module.exports = Renderer;
