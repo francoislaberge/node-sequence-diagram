@@ -94,14 +94,6 @@ Renderer.TEXT_BACKGROUND_CLASS_ = 'textbg';
 Renderer.RECT_CLASS_ = 'rect';
 Renderer.TIMELINE_CLASS_ = 'timeline';
 
-Renderer.prototype.draw_line = function(x1, y1, x2, y2) {
-  return this._paper.path('M{0},{1} L{2},{3}', x1, y1, x2, y2);
-};
-
-Renderer.prototype.draw_rect = function(x, y, w, h) {
-  return this._paper.rect(x, y, w, h);
-};
-
 Renderer.prototype.draw = function(container) {
   this._paper = new Raphael(container, 0, 0);
 
@@ -278,11 +270,13 @@ Renderer.prototype.draw_actors = function(offsetY) {
     // Bottom box
     this.draw_actor(a, y + this._actors_height + this._signals_height, this._actors_height);
 
-    // Veritical line
+    // Vertical line
     var aX = getCenterX(a);
-    var line = this.draw_line(
-      aX, y + this._actors_height - ACTOR_MARGIN,
-      aX, y + this._actors_height + ACTOR_MARGIN + this._signals_height);
+    var line = this._paper.path('M{0},{1} v{2}',
+        aX,
+        y + this._actors_height - ACTOR_MARGIN,
+        2 * ACTOR_MARGIN + this._signals_height);
+
     line.node.classList.add(Renderer.TIMELINE_CLASS_);
   }, this);
 };
@@ -354,7 +348,7 @@ Renderer.prototype.draw_signal = function (signal, offsetY) {
 
   // Draw the line along the bottom of the signal
   y = offsetY + signal.height - SIGNAL_MARGIN - SIGNAL_PADDING;
-  var line = this.draw_line(aX, y, bX, y);
+  var line = this._paper.path('M{0},{1} h{2}', aX, y, (bX - aX));
 
   line.node.classList.add(Renderer.LINE_CLASS_[signal.linetype]);
   line.node.classList.add(Renderer.ARROW_CLASS_[signal.arrowtype]);
@@ -421,7 +415,7 @@ Renderer.prototype.draw_text_box = function (box, text, margin, padding) {
   var h = box.height - 2 * margin;
 
   // Draw inner box
-  var rect = this.draw_rect(x, y, w, h);
+  var rect = this._paper.rect(x, y, w, h);
   rect.node.classList.add(Renderer.RECT_CLASS_);
 
   // Draw text (in the center)
