@@ -1,12 +1,37 @@
 {
-  "name": "js-sequence-diagrams",
+  "name": "node-sequence-diagram",
   "author": "Sharvil Nanavati <sharvil.nanavati@gmail.com>",
-  "version": "0.0.0",
-
+  "description": "Node.js library to generate sequence diagrams",
+  "version": "1.0.0",
+  "homepage": "https://github.com/sharvil/node-sequence-diagram",
   "main": "src/diagram.js",
 
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sharvil/node-sequence-diagram.git"
+  },
+
+  "bugs": {
+    "url": "https://github.com/sharvil/node-sequence-diagram/issues"
+  },
+
+  "licenses": [
+    {
+      "type": "BSD-2-Clause",
+      "url": "https://github.com/sharvil/node-sequence-diagram/blob/master/LICENSE"
+    }
+  ],
+
+  "keywords": [
+    "message",
+    "sequence",
+    "chart",
+    "diagram",
+    "msc"
+  ],
+
   "devDependencies": {
-    "jison": "0.4.15"
+    "jison": "0.4.x"
   },
 
   "scripts": {
