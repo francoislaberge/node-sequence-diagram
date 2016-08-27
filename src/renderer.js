@@ -1,5 +1,5 @@
 var Diagram = require('./diagram.js');
-var Raphael = require('raphael');
+var Svg = require('./svg.js');
 
 // Following the CSS convention
 // Margin is the gap outside the box
@@ -42,27 +42,13 @@ function getCenterY(box) {
 }
 
 /******************
-* Raphaël extras
-******************/
-
-/**
- * Returns the text's bounding box
- */
-Raphael.fn.text_bbox = function (text) {
-  var p = this.text(0, 0, text);
-  var bb = p.getBBox();
-  p.remove();
-
-  return bb;
-};
-
-/******************
 * Renderer
 ******************/
 
 var Renderer = function(diagram) {
+  this.svg_ = new Svg();
+
   this.diagram = diagram;
-  this._paper  = undefined;
 
   this._title  = undefined; // hack - This should be somewhere better
 
@@ -95,12 +81,10 @@ Renderer.RECT_CLASS_ = 'rect';
 Renderer.TIMELINE_CLASS_ = 'timeline';
 
 Renderer.prototype.draw = function(container) {
-  this._paper = new Raphael(container, 0, 0);
+  container.appendChild(this.svg_.getDocument());
 
   this.layout();
-
-  this._paper.setStart();
-  this._paper.setSize(this.diagram.width, this.diagram.height);
+  this.svg_.setDocumentSize(this.diagram.width, this.diagram.height);
 
   var titleHeight = this._title ? this._title.height : 0;
   var y = DIAGRAM_MARGIN + titleHeight;
@@ -108,14 +92,11 @@ Renderer.prototype.draw = function(container) {
   this.draw_title();
   this.draw_actors(y);
   this.draw_signals(y + this._actors_height);
-
-  this._paper.setFinish();
 };
 
 Renderer.prototype.layout = function() {
   // Local copies
   var diagram = this.diagram;
-  var paper   = this._paper;
   var actors  = diagram.actors;
   var signals = diagram.signals;
 
@@ -125,7 +106,8 @@ Renderer.prototype.layout = function() {
   // Setup some layout stuff
   if (diagram.title) {
     var title = this._title = {};
-    var bb = paper.text_bbox(diagram.title);
+    var textNode = this.svg_.text(diagram.title);
+    var bb = this.svg_.getElementSize(textNode);
     title.text_bb = bb;
     title.message = diagram.title;
 
@@ -139,7 +121,8 @@ Renderer.prototype.layout = function() {
   }
 
   actors.forEach(function(a) {
-    var bb = paper.text_bbox(a.name);
+    var textNode = this.svg_.text(a.name);
+    var bb = this.svg_.getElementSize(textNode);
     a.text_bb = bb;
 
     a.x = 0; a.y = 0;
@@ -171,7 +154,8 @@ Renderer.prototype.layout = function() {
   signals.forEach(function(s) {
     var a, b; // Indexes of the left and right actors involved
 
-    var bb = paper.text_bbox(s.message);
+    var textNode = this.svg_.text(s.message);
+    var bb = this.svg_.getElementSize(textNode);
 
     s.text_bb = bb;
     s.width   = bb.width;
@@ -272,12 +256,13 @@ Renderer.prototype.draw_actors = function(offsetY) {
 
     // Vertical line
     var aX = getCenterX(a);
-    var line = this._paper.path('M{0},{1} v{2}',
+    var line = this.svg_.path('M{0},{1} v{2}',
         aX,
         y + this._actors_height - ACTOR_MARGIN,
         2 * ACTOR_MARGIN + this._signals_height);
 
-    line.node.classList.add(Renderer.TIMELINE_CLASS_);
+    line.classList.add(Renderer.TIMELINE_CLASS_);
+    this.svg_.getDocument().appendChild(line);
   }, this);
 };
 
@@ -311,28 +296,20 @@ Renderer.prototype.draw_self_signal = function(signal, offsetY) {
   var text_bb = signal.text_bb;
   var aX = getCenterX(signal.actorA);
 
-  var x = aX + SELF_SIGNAL_WIDTH + SIGNAL_PADDING - text_bb.x;
+  var x = aX + SELF_SIGNAL_WIDTH + SIGNAL_PADDING + text_bb.width / 2;
   var y = offsetY + signal.height / 2;
 
   this.draw_text(x, y, signal.message);
 
   // 3 segment polyline.
-  var line = this._paper.path("M{0},{1} h{2} v{3} h{4}", aX, offsetY + SIGNAL_MARGIN,
+  var line = this.svg_.path("M{0},{1} h{2} v{3} h{4}", aX, offsetY + SIGNAL_MARGIN,
       SELF_SIGNAL_WIDTH,
       signal.height - SIGNAL_MARGIN,
       -SELF_SIGNAL_WIDTH);
 
-  line.node.classList.add(Renderer.LINE_CLASS_[signal.linetype]);
-  line.node.classList.add(Renderer.ARROW_CLASS_[signal.arrowtype]);
-
-  // TODO: eliminate these additional attributes. The stroke-width attribute is
-  // required to make sure the arrow head terminates at the edge of the timeline
-  // and not in the middle of it (i.e. add padding). The arrow-end attribute is
-  // specific to Raphael and needs to be emulated.
-  line.attr({
-    'stroke-width': 2,
-    'arrow-end': this.arrow_types[signal.arrowtype] + '-wide-long',
-  });
+  line.classList.add(Renderer.LINE_CLASS_[signal.linetype]);
+  line.classList.add(Renderer.ARROW_CLASS_[signal.arrowtype]);
+  this.svg_.getDocument().appendChild(line);
 };
 
 Renderer.prototype.draw_signal = function (signal, offsetY) {
@@ -348,19 +325,11 @@ Renderer.prototype.draw_signal = function (signal, offsetY) {
 
   // Draw the line along the bottom of the signal
   y = offsetY + signal.height - SIGNAL_MARGIN - SIGNAL_PADDING;
-  var line = this._paper.path('M{0},{1} h{2}', aX, y, (bX - aX));
+  var line = this.svg_.path('M{0},{1} h{2}', aX, y, (bX - aX));
 
-  line.node.classList.add(Renderer.LINE_CLASS_[signal.linetype]);
-  line.node.classList.add(Renderer.ARROW_CLASS_[signal.arrowtype]);
-
-  // TODO: eliminate these additional attributes. The stroke-width attribute is
-  // required to make sure the arrow head terminates at the edge of the timeline
-  // and not in the middle of it (i.e. add padding). The arrow-end attribute is
-  // specific to Raphael and needs to be emulated.
-  line.attr({
-    'stroke-width': 2,
-    'arrow-end': this.arrow_types[signal.arrowtype] + '-wide-long',
-  });
+  line.classList.add(Renderer.LINE_CLASS_[signal.linetype]);
+  line.classList.add(Renderer.ARROW_CLASS_[signal.arrowtype]);
+  this.svg_.getDocument().appendChild(line);
 };
 
 Renderer.prototype.draw_note = function (note, offsetY) {
@@ -396,16 +365,23 @@ Renderer.prototype.draw_note = function (note, offsetY) {
  * x,y (int) x,y center point for this text
  * TODO Horz center the text when it's multi-line print
  */
-Renderer.prototype.draw_text = function (x, y, text) {
-  var paper = this._paper;
-  var t = paper.text(x, y, text);
+Renderer.prototype.draw_text = function (x, y, text, opt_dontDrawBox) {
+  var t = this.svg_.text(text);
+  t.setAttribute('x', x);
+  t.setAttribute('y', y);
+  t.style.textAnchor = 'middle';
+  t.style.alignmentBaseline = 'central';
 
-  // draw a rect behind it
-  var bb = t.getBBox();
-  var r = paper.rect(bb.x, bb.y, bb.width, bb.height);
-  r.node.classList.add(Renderer.TEXT_BACKGROUND_CLASS_);
+  if (!opt_dontDrawBox) {
+    var bb = this.svg_.getElementSize(t);
+    var r = this.svg_.rect(bb.width, bb.height);
+    r.setAttribute('x', bb.x);
+    r.setAttribute('y', bb.y);
+    r.classList.add(Renderer.TEXT_BACKGROUND_CLASS_);
+    this.svg_.getDocument().appendChild(r);
+  }
 
-  t.toFront();
+  this.svg_.getDocument().appendChild(t);
 };
 
 Renderer.prototype.draw_text_box = function (box, text, margin, padding) {
@@ -415,14 +391,17 @@ Renderer.prototype.draw_text_box = function (box, text, margin, padding) {
   var h = box.height - 2 * margin;
 
   // Draw inner box
-  var rect = this._paper.rect(x, y, w, h);
-  rect.node.classList.add(Renderer.RECT_CLASS_);
+  var rect = this.svg_.rect(w, h);
+  rect.setAttribute('x', x);
+  rect.setAttribute('y', y);
+  rect.classList.add(Renderer.RECT_CLASS_);
+  this.svg_.getDocument().appendChild(rect);
 
   // Draw text (in the center)
   x = getCenterX(box);
   y = getCenterY(box);
 
-  this.draw_text(x, y, text);
+  this.draw_text(x, y, text, true /* opt_dontDrawBox */);
 };
 
 module.exports = Renderer;
