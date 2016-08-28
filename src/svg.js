@@ -1,6 +1,6 @@
 var NS = 'http://www.w3.org/2000/svg';
 
-var Svg = function() {
+var Svg = function(stylesheet) {
   this.root_ = document.createElementNS(NS, 'svg');
 
   var defs = document.createElementNS(NS, 'defs');
@@ -27,6 +27,7 @@ var Svg = function() {
   openArrow.setAttribute('orient', 'auto');
   openArrowPath.setAttribute('style', 'stroke-width: 1');
 
+  this.root_.appendChild(stylesheet);
   this.root_.appendChild(defs);
   defs.appendChild(filledArrow);
   filledArrow.appendChild(filledArrowPath);

@@ -45,8 +45,8 @@ function getCenterY(box) {
 * Renderer
 ******************/
 
-var Renderer = function(diagram) {
-  this.svg_ = new Svg();
+var Renderer = function(diagram, stylesheet) {
+  this.svg_ = new Svg(stylesheet);
 
   this.diagram = diagram;
 

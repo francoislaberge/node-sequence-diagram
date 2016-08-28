@@ -111,9 +111,9 @@ Diagram.parse = function(input) {
   return p.parse(input);
 };
 
-Diagram.prototype.drawSVG = function(container) {
+Diagram.prototype.drawSVG = function(container, stylesheet) {
   var Renderer = require('./renderer.js');
-  new Renderer(this).draw(container);
+  new Renderer(this, stylesheet).draw(container);
 };
 
 module.exports = Diagram;
